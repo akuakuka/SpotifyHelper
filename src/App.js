@@ -2,8 +2,6 @@ import React, { Component } from 'react';
 import './App.css';
 import axios from 'axios';
 import User from './components/User.js'
-console.log(process.env)
-//const ClientID = '1a01776648c346898ae59a997f989a91'
 const ClientID = process.env.REACT_APP_CLIENTID
 let CallBackUri = process.env.REACT_APP_CALLBACK_URI
 let AuthURL = 'https://accounts.spotify.com/authorize?client_id=' + 
@@ -16,45 +14,55 @@ if (window.location.href==='http://localhost:3000/' || window.location.href=== '
 } else {
   token = window.location.href.match(/\#(?:access_token)\=([\S\s]*?)\&/)[1];
 }
-  const getFollowed = async (url, arr) => {
+  
+  const getFollowed = async function(url) {
     let tok = 'Bearer ' + token;
     let headers = {headers: {'Authorization': tok}}
-    let jk = [];
-    let r = ''
     const response = await axios.get(url, headers)
-         r = response.data.artists
-           jk = arr.concat(response.data.artists.items)
-           console.log(jk)
-      if(r.next===null) {
-        let art = {}
-        await jk.map(jj =>
-          art = {... jj})
-        return art
-      } else {
-        await getFollowed(r.next, jk)
-      }
-  }
+    if (response.data.artists.next !== null) {
+      console.log(response)
+      return response.data.artists.items.concat(await getFollowed(response.data.artists.next));
+    } else {
+      return response.data.artists.items;
+    }
+  }//response.data.artists.next
+
+
 class App extends Component {
+   componentDidMount() {
+    console.log("DidMOUNT")
+ 
+  }
   constructor() {
     super()
     this.state = {
-      artists: []
+      artists: [],
+      user: false
     }
   }
 
-  handleLoginClick = () => {
+    handleLoginClick = () => {
     window.location.href = AuthURL;
   }
    handleGetFOllowClick = async () => {
-     const artists = await getFollowed('https://api.spotify.com/v1/me/following?type=artist&limit=50', [])
-     console.log(artists)
-    }
+    const artists= await    getFollowed('https://api.spotify.com/v1/me/following?type=artist&limit=50')
+    console.log(artists)
+    this.setState({artists: artists})
+      }
      handlePrintClick = () => {
-     console.log("asfasafa")
+    this.state.artists.map(artist => {
+      console.log(artist.name)
+    })
+      }
+      getUserInfo = async () => {
+        let tok = 'Bearer ' + token;
+        let headers = {headers: {'Authorization': tok}}
+        const userinfo = await axios.get('https://api.spotify.com/v1/me', headers)
+        console.log(userinfo)
+        this.setState({user: userinfo.data})
       }
        handlePrintAlbums = () => {
-    //let url = 'https://api.spotify.com/v1/artists/1vCWHaC5f2uS3yhpwWbIA6/albums?limit=50&include_groups=album'
-    let tok = 'Bearer ' + token;
+     let tok = 'Bearer ' + token;
     let headers = {headers: {'Authorization': tok}}
     
     this.state.artists.map(artist => {
@@ -69,14 +77,17 @@ class App extends Component {
   
   
   render() {
+    const isLoggedIn = this.state.user;
     return (
       <div className="App">
         <header className="App-header">
-        <User></User>
+        {isLoggedIn ? <User usr={this.state.user}></User>: <a>NOtLoggeDIn</a>}
+        
             <button onClick={this.handleLoginClick}>Login to Spotifu</button>
             <button onClick={this.handleGetFOllowClick}>GetFollowed</button>
             <button onClick={this.handlePrintClick}>PRint</button>
             <button onClick={this.handlePrintAlbums}>Print artist albums</button>
+            <button onClick={this.getUserInfo}>userinfo</button>
         </header>
       </div>
     );
