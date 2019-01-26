@@ -13,7 +13,7 @@ class GridComponent extends Component {
   render() {
     const artistit = this.props.artistit;
     return (
-      <Grid container columns={6}>
+      <Grid columns={3} container doubling stackable>
         {artistit.map(artisti => (
           <Grid.Column id={artisti.id + 3}>
             <Card color="green" key={artisti.id}>
