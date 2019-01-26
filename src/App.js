@@ -10,7 +10,8 @@ let CallBackUri = process.env.REACT_APP_CALLBACK_URI;
 let token = "";
 if (
   window.location.href === "http://localhost:3000/" ||
-  window.location.href === "http://192.168.0.104:3000/"
+  window.location.href === "http://192.168.0.104:3000/" ||
+  window.location.href === 'https://spotifyfollowehelper.herokuapp.com/'
 ) {
   console.log("eikirjauduttu");
   CallBackUri = window.location.href;
@@ -105,7 +106,7 @@ class App extends Component {
     });
     await this.apuFunc(albums);
   };
-  handleLoginClick = async () => {
+  handleLoginClick = async () => {http://192.168.0.104:3000/
     window.location.href = AuthURL;
   };
   handleGetFOllowClick = async () => {
