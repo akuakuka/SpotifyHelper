@@ -1,22 +1,16 @@
-import React, { Component } from 'react';
-import {Card, Image} from 'semantic-ui-react';
+import React, { Component } from "react";
+import { Card, Image, Flag } from "semantic-ui-react";
+import "semantic-ui-css/semantic.min.css";
+
 class User extends Component {
-//
-    render() {
-      let user = this.props.usr
-      console.log(user)
-      return (
-        <Card>
-        <Image src={user.images[0].url} />
-        <Card.Content>
-          <Card.Header>{user.display_name}</Card.Header>
-          <Card.Meta>
-          {user.followers.total} Followers
-          </Card.Meta>
-          <Card.Description>{user.email}</Card.Description>
-        </Card.Content>
-      </Card>
-      );
-    }
+  render() {
+    let user = this.props.user;
+    return (
+      <div>
+        <Image src={user.images[0].url} circular ize="tiny" />{" "}
+        <Flag name={user.country.toLowerCase()} />
+      </div>
+    );
   }
-  export default User;
+}
+export default User;
