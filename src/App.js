@@ -3,7 +3,7 @@ import "./App.css";
 import axios from "axios";
 //import User from "./components/User.js";
 import GridComponent from "./components/GridComponent.js";
-import { Button, Menu, Icon } from "semantic-ui-react";
+import { Button } from "semantic-ui-react";
 import "semantic-ui-css/semantic.min.css";
 const ClientID = process.env.REACT_APP_CLIENTID;
 let CallBackUri = process.env.REACT_APP_CALLBACK_URI;
@@ -18,13 +18,12 @@ if (
 } else {
   token = window.location.href.match(/\#(?:access_token)\=([\S\s]*?)\&/)[1]; // eslint-disable-line no-use-before-define
 }
-
 let AuthURL =
   "https://accounts.spotify.com/authorize?client_id=" +
   ClientID +
   "&redirect_uri=" +
   CallBackUri +
-  "&scope=user-read-private%20user-read-email&response_type=token&state=123" +
+  "&scope=user-read-private%20user-library-modify%20user-follow-modify%20user-read-email&response_type=token&state=123" +
   "&show_dialog=true";
 
 
@@ -62,7 +61,7 @@ class App extends Component {
       console.log("DIDMOUNT KIRJAUDUTTU");
       const user = this.getUserInfo();
       console.log(user);
-      const followed = this.handleGetFOllowClick();
+      this.handleGetFOllowClick();
     }
   }
   constructor() {
@@ -71,42 +70,56 @@ class App extends Component {
       artists: [],
       user: {},
       checked: [],
-      followedAlbums: []
+      followedAlbums: [],
+      CheckedAlbums: []
     };
   }
-  apuFunc = async albums => {
+  apuFunc = async () => {
+    console.log("appufuncsisäl")
     let tok = "Bearer " + token;
     let headers = { headers: { Authorization: tok } };
-    let putUrl = "https://api.spotify.com/v1/me/albums?ids=";
-    await albums.map(id => {
-      putUrl = putUrl + ","+ id;
-    });
-     await console.log(putUrl);
-    // axios.put(putUrl, headers).then
-  };
-  saveAlbums = async () => {
-    let tok = "Bearer " + token;
-    let headers = { headers: { Authorization: tok } };
-    let albums = [];
-    this.state.checked.map(id => {
+    let albumit = []
+    await this.state.checked.map(async id => {
       let url =
         "https://api.spotify.com/v1/artists/" +
         id +
         "/albums?limit=50&include_groups=album";
-      axios
+        await axios
         .get(url, headers)
-        .then(response => {
-          response.data.items.map(jk => {
-            albums.push(jk.id);
-          });
+        .then(async response => {
+            await albumit.push(...response.data.items)
+
         })
         .catch(error => {
           console.log(error);
         });
-    });
-    await this.apuFunc(albums);
+    })
+
+   this.setState({CheckedAlbums: albumit})
+
+    }
+  
+  saveAlbums = async () => {
+    let tok = "Bearer " + token;
+    let headers = { headers: { Authorization: tok } };
+    await this.apuFunc();
+    let url = 'https://api.spotify.com/v1/me/albums?ids='
+    let data = ["1iRr9SxJtbenO0gygNltV7",
+    "4vtuyWYvEknMTfktw9nVxm",
+    "7HiIz7nui3LtGVY62ORP3b",
+    "6Px7D6BKZIj4DuaRWsADBe",
+    "5beLa6Zh6ndCZKWcIVBR4a",
+    "2axgPfP2SL3dqVI9MimiwU"]
+    console.log(data)
+ await console.log(this.hadnleconsle())
+  const config = {
+    headers: { 'Authorization': tok }
+  }    
+   const response = await axios.put(url, data, config)
+  
+   console.log(response)
   };
-  handleLoginClick = async () => {http://192.168.0.104:3000/
+  handleLoginClick = async () => {
     window.location.href = AuthURL;
   };
   handleGetFOllowClick = async () => {
@@ -173,7 +186,6 @@ class App extends Component {
         });
     });
   };
-
   render() {
     return (
       <div>
@@ -182,7 +194,9 @@ class App extends Component {
             <Button onClick={this.handleLoginClick}>Button</Button>
           ) : (
             <div>
-              <Button onClick={this.saveAlbums} />
+              <Button onClick={this.saveAlbums} >SaveTesti</Button>
+              <Button onClick={this.testi} >testitestitesti</Button>
+              <Button onClick={this.hadnleconsle} >CONSOLILOGISTATE</Button>
               <Button onClick={this.handleGetSavedAlbums}>PrintSavedAlbums</Button>
               <GridComponent
                 artistit={this.state.artists}
