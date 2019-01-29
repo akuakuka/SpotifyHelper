@@ -74,8 +74,21 @@ class App extends Component {
       CheckedAlbums: []
     };
   }
-  apuFunc = async () => {
-    console.log("appufuncsisäl")
+  testioo = async () => {
+    let ko = []
+    this.state.CheckedAlbums.map(artist => {
+      console.log(artist.id);
+      ko.push(artist.id)
+    });
+    await console.log(ko)
+    return ko
+  };
+  zzz = async () => {
+    this.state.CheckedAlbums.map(artist => {
+      console.log(artist.id);
+    });
+  };
+  GetCheckedArtistsAlbums = async () => {
     let tok = "Bearer " + token;
     let headers = { headers: { Authorization: tok } };
     let albumit = []
@@ -84,39 +97,42 @@ class App extends Component {
         "https://api.spotify.com/v1/artists/" +
         id +
         "/albums?limit=50&include_groups=album";
-        await axios
+       let res =  await axios
         .get(url, headers)
-        .then(async response => {
-            await albumit.push(...response.data.items)
-
-        })
-        .catch(error => {
-          console.log(error);
-        });
+       // res = res.map(kk => res.items)
+       await res.data.items.map(alb => albumit.push(alb.id))
     })
-
-   this.setState({CheckedAlbums: albumit})
-
+    
+    this.setState({
+     CheckedAlbums: albumit 
+  },() => {
+      console.log("SETSTATE")
+  });
     }
-  
+
   saveAlbums = async () => {
     let tok = "Bearer " + token;
-    let headers = { headers: { Authorization: tok } };
-    await this.apuFunc();
+   await this.GetCheckedArtistsAlbums()
     let url = 'https://api.spotify.com/v1/me/albums?ids='
-    let data = ["1iRr9SxJtbenO0gygNltV7",
+  let data = ["1iRr9SxJtbenO0gygNltV7",
     "4vtuyWYvEknMTfktw9nVxm",
-    "7HiIz7nui3LtGVY62ORP3b",
-    "6Px7D6BKZIj4DuaRWsADBe",
+     "7HiIz7nui3LtGVY62ORP3b",
+     "6Px7D6BKZIj4DuaRWsADBe",
     "5beLa6Zh6ndCZKWcIVBR4a",
-    "2axgPfP2SL3dqVI9MimiwU"]
+   "2axgPfP2SL3dqVI9MimiwU"]
+    let duta = await this.state.CheckedAlbums;
+    console.log(duta)
     console.log(data)
- await console.log(this.hadnleconsle())
+    console.log(typeof(duta))
+    console.log(typeof(data))
+    console.log("aösjldf")
+    JSON.stringify(duta)
+    console.log(duta)
   const config = {
-    headers: { 'Authorization': tok }
+    headers: { 'Authorization': tok,
+    'Content-Type':'application/json' }
   }    
-   const response = await axios.put(url, data, config)
-  
+   const response = await axios.put(url, duta, config)
    console.log(response)
   };
   handleLoginClick = async () => {
@@ -129,6 +145,7 @@ class App extends Component {
     console.log(artists);
     this.setState({ artists: artists });
   };
+
   handlePrintClick = () => {
     this.state.artists.map(artist => {
       console.log(artist.name);
@@ -138,7 +155,8 @@ class App extends Component {
     let url = 'https://api.spotify.com/v1/me/albums?limit=50'
     const savedalbums = await getSavedAlbums(url)
     console.log(savedalbums)
-    this.setState({ followedAlbums: savedalbums });
+    let koo = savedalbums.map(kk => kk.album.id)
+    this.setState({ followedAlbums: koo });
   }
   getUserInfo = async () => {
     let tok = "Bearer " + token;
@@ -167,6 +185,23 @@ class App extends Component {
       });
     }
   };
+  removeAllFollowed = async () => {
+    let url = 'https://api.spotify.com/v1/me/albums'
+    let tok = "Bearer " + token;
+    
+   const config = {
+     headers: { 'Authorization': tok },
+    //  data: ["1iRr9SxJtbenO0gygNltV7",
+    //  "4vtuyWYvEknMTfktw9nVxm",
+    //  "7HiIz7nui3LtGVY62ORP3b",
+    //  "6Px7D6BKZIj4DuaRWsADBe",
+    //  "5beLa6Zh6ndCZKWcIVBR4a",
+    //  "2axgPfP2SL3dqVI9MimiwU"]
+    data: this.state.followedAlbums
+   }   
+   const response = await axios.delete(url, config)
+   console.log(response)
+  }
   handlePrintAlbums = () => {
     let tok = "Bearer " + token;
     let headers = { headers: { Authorization: tok } };
@@ -196,8 +231,10 @@ class App extends Component {
             <div>
               <Button onClick={this.saveAlbums} >SaveTesti</Button>
               <Button onClick={this.testi} >testitestitesti</Button>
+              <Button onClick={this.zzz} >zzz</Button>
               <Button onClick={this.hadnleconsle} >CONSOLILOGISTATE</Button>
               <Button onClick={this.handleGetSavedAlbums}>PrintSavedAlbums</Button>
+              <Button onClick={this.removeAllFollowed} >RemoveAllFollowed</Button>
               <GridComponent
                 artistit={this.state.artists}
                 func={this.handleCheckBox}
