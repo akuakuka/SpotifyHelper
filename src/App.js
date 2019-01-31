@@ -92,16 +92,17 @@ class App extends Component {
     let tok = "Bearer " + token;
     let headers = { headers: { Authorization: tok } };
     let albumit = []
-    await this.state.checked.map(async id => {
+    await Promise.all(this.state.checked.map(async id => {
       let url =
         "https://api.spotify.com/v1/artists/" +
         id +
         "/albums?limit=50&include_groups=album";
        let res =  await axios
         .get(url, headers)
+        console.log('res', res)
        // res = res.map(kk => res.items)
        await res.data.items.map(alb => albumit.push(alb.id))
-    })
+    }));
     
     this.setState({
      CheckedAlbums: albumit 
@@ -114,25 +115,12 @@ class App extends Component {
     let tok = "Bearer " + token;
    await this.GetCheckedArtistsAlbums()
     let url = 'https://api.spotify.com/v1/me/albums?ids='
-  let data = ["1iRr9SxJtbenO0gygNltV7",
-    "4vtuyWYvEknMTfktw9nVxm",
-     "7HiIz7nui3LtGVY62ORP3b",
-     "6Px7D6BKZIj4DuaRWsADBe",
-    "5beLa6Zh6ndCZKWcIVBR4a",
-   "2axgPfP2SL3dqVI9MimiwU"]
-    let duta = await this.state.CheckedAlbums;
-    console.log(duta)
-    console.log(data)
-    console.log(typeof(duta))
-    console.log(typeof(data))
-    console.log("aösjldf")
-    JSON.stringify(duta)
-    console.log(duta)
+    let data = await this.state.CheckedAlbums;
   const config = {
     headers: { 'Authorization': tok,
     'Content-Type':'application/json' }
   }    
-   const response = await axios.put(url, duta, config)
+   const response = await axios.put(url, data, config)
    console.log(response)
   };
   handleLoginClick = async () => {
@@ -186,21 +174,22 @@ class App extends Component {
     }
   };
   removeAllFollowed = async () => {
-    let url = 'https://api.spotify.com/v1/me/albums'
+    let url = 'https://api.spotify.com/v1/me/albums/'
     let tok = "Bearer " + token;
     
    const config = {
      headers: { 'Authorization': tok },
-    //  data: ["1iRr9SxJtbenO0gygNltV7",
-    //  "4vtuyWYvEknMTfktw9nVxm",
-    //  "7HiIz7nui3LtGVY62ORP3b",
-    //  "6Px7D6BKZIj4DuaRWsADBe",
-    //  "5beLa6Zh6ndCZKWcIVBR4a",
-    //  "2axgPfP2SL3dqVI9MimiwU"]
-    data: this.state.followedAlbums
+     data: this.state.followedAlbums
    }   
-   const response = await axios.delete(url, config)
-   console.log(response)
+   try {
+    const response = await axios.delete(url, config)
+    console.log(response)
+   }
+
+   catch (e) {
+    console.error('Failure!');
+    console.error(e.response.data);
+  }
   }
   handlePrintAlbums = () => {
     let tok = "Bearer " + token;
