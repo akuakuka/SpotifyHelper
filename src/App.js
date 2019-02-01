@@ -3,7 +3,9 @@ import "./App.css";
 import axios from "axios";
 //import User from "./components/User.js";
 import GridComponent from "./components/GridComponent.js";
-import { Button } from "semantic-ui-react";
+import Login from "./components/Login.js";
+import Filter from "./components/Filter.js";
+import { Button, Menu, Icon,Flag, Popup, Image } from "semantic-ui-react";
 import "semantic-ui-css/semantic.min.css";
 const ClientID = process.env.REACT_APP_CLIENTID;
 let CallBackUri = process.env.REACT_APP_CALLBACK_URI;
@@ -53,7 +55,7 @@ const getSavedAlbums = async (url) => {
   }
 };
 class App extends Component {
-  componentDidMount() {
+  async componentDidMount() {
     console.log("DidMOUNT");
     if (token === "") {
       console.log("DIDMOUNT EI KIRJAUDUTTU");
@@ -61,7 +63,7 @@ class App extends Component {
       console.log("DIDMOUNT KIRJAUDUTTU");
       const user = this.getUserInfo();
       console.log(user);
-      this.handleGetFOllowClick();
+      await this.handleGetFOllowClick();
     }
   }
   constructor() {
@@ -71,7 +73,8 @@ class App extends Component {
       user: {},
       checked: [],
       followedAlbums: [],
-      CheckedAlbums: []
+      CheckedAlbums: [],
+      filterString: ''
     };
   }
   testioo = async () => {
@@ -82,11 +85,6 @@ class App extends Component {
     });
     await console.log(ko)
     return ko
-  };
-  zzz = async () => {
-    this.state.CheckedAlbums.map(artist => {
-      console.log(artist.id);
-    });
   };
   GetCheckedArtistsAlbums = async () => {
     let tok = "Bearer " + token;
@@ -99,9 +97,13 @@ class App extends Component {
         "/albums?limit=50&include_groups=album";
        let res =  await axios
         .get(url, headers)
-        console.log('res', res)
-       // res = res.map(kk => res.items)
-       await res.data.items.map(alb => albumit.push(alb.id))
+       await res.data.items.map(alb => {
+         if (this.state.CheckedAlbums.includes(alb.id)) {
+           console.log(alb.id + "  <= already saved")
+         } else {
+          albumit.push(alb.id)}
+         })
+        
     }));
     
     this.setState({
@@ -110,8 +112,8 @@ class App extends Component {
       console.log("SETSTATE")
   });
     }
-
   saveAlbums = async () => {
+    await this.handleGetSavedAlbums()
     let tok = "Bearer " + token;
    await this.GetCheckedArtistsAlbums()
     let url = 'https://api.spotify.com/v1/me/albums?ids='
@@ -119,9 +121,25 @@ class App extends Component {
   const config = {
     headers: { 'Authorization': tok,
     'Content-Type':'application/json' }
-  }    
-   const response = await axios.put(url, data, config)
-   console.log(response)
+  } 
+  if(this.state.CheckedAlbums<50) {
+    const response = await axios.put(url, data, config)
+    console.log(response)
+  }   else {
+    var arrays = [], size = 50;
+
+    while (this.state.CheckedAlbums.length > 0) {
+      arrays.push(this.state.CheckedAlbums.splice(0, size));
+    }
+    arrays.map(async (array) => {
+      const response = await axios.put(url, array, config)
+      console.log(response)
+    })
+
+console.log(arrays);
+  }
+   
+   
   };
   handleLoginClick = async () => {
     window.location.href = AuthURL;
@@ -173,6 +191,9 @@ class App extends Component {
       });
     }
   };
+  handleGithubClick = () => {
+    window.location.href = "https://github.com/akuakuka/SpotifyHelper"
+  }
   removeAllFollowed = async () => {
     let url = 'https://api.spotify.com/v1/me/albums/'
     let tok = "Bearer " + token;
@@ -184,6 +205,7 @@ class App extends Component {
    try {
     const response = await axios.delete(url, config)
     console.log(response)
+    
    }
 
    catch (e) {
@@ -211,23 +233,42 @@ class App extends Component {
     });
   };
   render() {
+
     return (
-      <div>
+      <div className="App">
         <div>
-          {Object.keys(this.state.user).length === 0 ? (
-            <Button onClick={this.handleLoginClick}>Button</Button>
+          {Object.keys(this.state.user).length === 0 ? (<Login click={this.handleLoginClick}>
+           
+            </Login>
           ) : (
-            <div>
-              <Button onClick={this.saveAlbums} >SaveTesti</Button>
-              <Button onClick={this.testi} >testitestitesti</Button>
-              <Button onClick={this.zzz} >zzz</Button>
-              <Button onClick={this.hadnleconsle} >CONSOLILOGISTATE</Button>
-              <Button onClick={this.handleGetSavedAlbums}>PrintSavedAlbums</Button>
-              <Button onClick={this.removeAllFollowed} >RemoveAllFollowed</Button>
+            <div className="App">
+            <div className="Menu">
+            <Menu inverted color='grey' fixed='top'>
+              <Menu.Item onClick={this.saveAlbums} >SaveTesti</Menu.Item>
+              <Menu.Item onClick={this.handleGetSavedAlbums}>PrintSavedAlbums</Menu.Item>
+              <Menu.Item onClick={this.removeAllFollowed} >RemoveAllFollowed</Menu.Item>
+      <Menu.Item position='right'> <Filter onTextChange={text => {
+              this.setState({filterString: text})
+            }}></Filter>
+           </Menu.Item>
+           <Menu.Item position='right' icon='github' onClick={this.handleGithubClick}></Menu.Item>
+           <Menu.Item position='right'>      <Popup size='large'
+        key={this.state.user.id}
+        trigger={<Icon name='user outline'/>}
+        header={<Image src={this.state.user.images[0].url}/>}
+        content={<div><p>{this.state.user.display_name}</p><p>{this.state.user.email}</p><p>{<Flag name={this.state.user.country.toLowerCase()} />}{this.state.user.country}</p>
+        <p>{this.state.user.product}</p></div>}
+       
+      /></Menu.Item>
+              </Menu>
+              </div>
+              <div className='Artist'>
               <GridComponent
                 artistit={this.state.artists}
                 func={this.handleCheckBox}
+                filterString={this.state.filterString}
               />
+              </div>
             </div>
           )}
         </div>
