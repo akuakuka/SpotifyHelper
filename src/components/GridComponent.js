@@ -28,6 +28,7 @@ class GridComponent extends Component {
       })
       return imagearray[0].url
     }
+  
     return (
       <Grid columns={6} container doubling stackable>
                    { artistit.filter(artists =>

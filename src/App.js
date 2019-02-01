@@ -168,7 +168,7 @@ console.log(arrays);
     let tok = "Bearer " + token;
     let headers = { headers: { Authorization: tok } };
     const userinfo = await axios.get("https://api.spotify.com/v1/me", headers);
-    console.log(userinfo);
+    console.log(userinfo.data);
     this.setState({ user: userinfo.data });
     return userinfo;
   };
@@ -233,7 +233,6 @@ console.log(arrays);
     });
   };
   render() {
-
     return (
       <div className="App">
         <div>
@@ -252,14 +251,29 @@ console.log(arrays);
             }}></Filter>
            </Menu.Item>
            <Menu.Item position='right' icon='github' onClick={this.handleGithubClick}></Menu.Item>
-           <Menu.Item position='right'>      <Popup size='large'
+           <Menu.Item position='right'>
+           
+           {this.state.user.images.length===0 ? (<Popup size='large'
         key={this.state.user.id}
         trigger={<Icon name='user outline'/>}
         header={<Image src={this.state.user.images[0].url}/>}
         content={<div><p>{this.state.user.display_name}</p><p>{this.state.user.email}</p><p>{<Flag name={this.state.user.country.toLowerCase()} />}{this.state.user.country}</p>
-        <p>{this.state.user.product}</p></div>}
-       
-      /></Menu.Item>
+        <p>{this.state.user.product}</p></div>}/>) : 
+        (<Popup size='large'
+        key={this.state.user.id}
+        trigger={<Icon name='user outline'/>}
+        header={<Icon name='user'/>}
+        content={<div><p>{this.state.user.display_name}</p><p>{this.state.user.email}</p><p>{<Flag name={this.state.user.country.toLowerCase()} />}{this.state.user.country}</p>
+        <p>{this.state.user.product}</p></div>}/>
+       )}      
+           {/* <Popup size='large'
+        key={this.state.user.id}
+        trigger={<Icon name='user outline'/>}
+        header={<Image src={this.state.user.images[0].url}/>}
+        content={<div><p>{this.state.user.display_name}</p><p>{this.state.user.email}</p><p>{<Flag name={this.state.user.country.toLowerCase()} />}{this.state.user.country}</p>
+        <p>{this.state.user.product}</p></div>}/>
+        */}
+      </Menu.Item>
               </Menu>
               </div>
               <div className='Artist'>
