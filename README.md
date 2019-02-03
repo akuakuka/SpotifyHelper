@@ -1,4 +1,4 @@
-This project was bootstrapped with Create React App.
+Javascript, React, SemanticUI-React
 
 Register app: https://developer.spotify.com/dashboard/login
 Set Callbackurl from your apps settings
