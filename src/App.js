@@ -1,21 +1,17 @@
 import React, { Component } from "react";
 import "./App.css";
 import axios from "axios";
-//import User from "./components/User.js";
-import GridComponent from "./components/GridComponent.js";
+import Artist from "./components/Artist";
+import TopMenu from "./components/TopMenu";
 import Login from "./components/Login.js";
-import Filter from "./components/Filter.js";
-import { Button, Menu, Icon,Flag, Popup, Image } from "semantic-ui-react";
 import "semantic-ui-css/semantic.min.css";
 const ClientID = process.env.REACT_APP_CLIENTID;
 let CallBackUri = process.env.REACT_APP_CALLBACK_URI;
 let token = "";
 if (
-  window.location.href === "http://localhost:3000/" ||
-  window.location.href === "http://192.168.0.104:3000/" ||
-  window.location.href === 'https://spotifyfollowehelper.herokuapp.com/'
-) {
-  console.log("eikirjauduttu");
+  window.location.href === CallBackUri
+) 
+{
   CallBackUri = window.location.href;
 } else {
   token = window.location.href.match(/\#(?:access_token)\=([\S\s]*?)\&/)[1]; // eslint-disable-line no-use-before-define
@@ -27,14 +23,11 @@ let AuthURL =
   CallBackUri +
   "&scope=user-read-private%20user-library-modify%20user-follow-modify%20user-read-email&response_type=token&state=123" +
   "&show_dialog=true";
-
-
 const getFollowed = async function(url) {
   let tok = "Bearer " + token;
   let headers = { headers: { Authorization: tok } };
   const response = await axios.get(url, headers);
   if (response.data.artists.next !== null) {
-    console.log(response);
     return response.data.artists.items.concat(
       await getFollowed(response.data.artists.next)
     );
@@ -56,14 +49,11 @@ const getSavedAlbums = async (url) => {
 };
 class App extends Component {
   async componentDidMount() {
-    console.log("DidMOUNT");
     if (token === "") {
-      console.log("DIDMOUNT EI KIRJAUDUTTU");
     } else {
-      console.log("DIDMOUNT KIRJAUDUTTU");
-      const user = this.getUserInfo();
-      console.log(user);
-      await this.handleGetFOllowClick();
+      await this.getUserInfo();
+      await this.getFollowedArtists();
+      await this.handleGetSavedAlbums();
     }
   }
   constructor() {
@@ -77,15 +67,6 @@ class App extends Component {
       filterString: ''
     };
   }
-  testioo = async () => {
-    let ko = []
-    this.state.CheckedAlbums.map(artist => {
-      console.log(artist.id);
-      ko.push(artist.id)
-    });
-    await console.log(ko)
-    return ko
-  };
   GetCheckedArtistsAlbums = async () => {
     let tok = "Bearer " + token;
     let headers = { headers: { Authorization: tok } };
@@ -98,20 +79,15 @@ class App extends Component {
        let res =  await axios
         .get(url, headers)
        await res.data.items.map(alb => {
-         if (this.state.CheckedAlbums.includes(alb.id)) {
-           console.log(alb.id + "  <= already saved")
-         } else {
-          albumit.push(alb.id)}
+         if (!this.state.CheckedAlbums.includes(alb.id)) {
+          albumit.push(alb.id)
+        } 
          })
-        
     }));
-    
     this.setState({
      CheckedAlbums: albumit 
-  },() => {
-      console.log("SETSTATE")
-  });
-    }
+  })
+    };
   saveAlbums = async () => {
     await this.handleGetSavedAlbums()
     let tok = "Bearer " + token;
@@ -122,45 +98,32 @@ class App extends Component {
     headers: { 'Authorization': tok,
     'Content-Type':'application/json' }
   } 
-  if(this.state.CheckedAlbums<50) {
-    const response = await axios.put(url, data, config)
-    console.log(response)
+  if(this.state.CheckedAlbums<20) {
+    await axios.put(url, data, config)
   }   else {
-    var arrays = [], size = 50;
+    var arrays = [], size = 20;
 
     while (this.state.CheckedAlbums.length > 0) {
       arrays.push(this.state.CheckedAlbums.splice(0, size));
     }
     arrays.map(async (array) => {
-      const response = await axios.put(url, array, config)
-      console.log(response)
+      await axios.put(url, array, config)
     })
-
-console.log(arrays);
   }
-   
-   
-  };
+  await this.handleGetSavedAlbums();
+};
   handleLoginClick = async () => {
     window.location.href = AuthURL;
   };
-  handleGetFOllowClick = async () => {
+  getFollowedArtists = async () => {
     const artists = await getFollowed(
       "https://api.spotify.com/v1/me/following?type=artist&limit=50"
     );
-    console.log(artists);
     this.setState({ artists: artists });
-  };
-
-  handlePrintClick = () => {
-    this.state.artists.map(artist => {
-      console.log(artist.name);
-    });
   };
   handleGetSavedAlbums = async () => {
     let url = 'https://api.spotify.com/v1/me/albums?limit=50'
     const savedalbums = await getSavedAlbums(url)
-    console.log(savedalbums)
     let koo = savedalbums.map(kk => kk.album.id)
     this.setState({ followedAlbums: koo });
   }
@@ -168,21 +131,17 @@ console.log(arrays);
     let tok = "Bearer " + token;
     let headers = { headers: { Authorization: tok } };
     const userinfo = await axios.get("https://api.spotify.com/v1/me", headers);
-    console.log(userinfo.data);
     this.setState({ user: userinfo.data });
     return userinfo;
   };
-  handleCheckBox = jj => {
+  handleCheckBox = (jj) => {
     if (this.state.checked.includes(jj)) {
-      console.log(jj, "onjolistal");
-
       let array = this.state.checked;
       var index = array.indexOf(jj);
       if (index > -1) {
         array.splice(index, 1);
       }
     } else {
-      console.log("CheckboxChange", jj);
       let newarray = [...this.state.checked, jj];
       let filter = this.state.filterString;
       this.setState({
@@ -194,99 +153,59 @@ console.log(arrays);
   handleGithubClick = () => {
     window.location.href = "https://github.com/akuakuka/SpotifyHelper"
   }
+  handleFilterStringChange = (text) => {
+    this.setState({filterString: text}, function () {
+  });
+  }
   removeAllFollowed = async () => {
+    if(this.state.followedAlbums<1) {
+      return;
+    }
     let url = 'https://api.spotify.com/v1/me/albums/'
     let tok = "Bearer " + token;
-    
    const config = {
      headers: { 'Authorization': tok },
      data: this.state.followedAlbums
    }   
-   try {
-    const response = await axios.delete(url, config)
-    console.log(response)
-    
-   }
+   if(this.state.followedAlbums<20) {
+  await axios.delete(url, config)
+  }   else {
+    var arrays = [], size = 20;
 
-   catch (e) {
-    console.error('Failure!');
-    console.error(e.response.data);
+    while (this.state.followedAlbums.length > 0) {
+      arrays.push(this.state.followedAlbums.splice(0, size));
+    }
+    arrays.map(async (array) => {
+      const config2 = {
+        headers: { 'Authorization': tok },
+        data: array
+      }
+      await axios.delete(url, config2)
+    })
   }
-  }
-  handlePrintAlbums = () => {
-    let tok = "Bearer " + token;
-    let headers = { headers: { Authorization: tok } };
-
-    this.state.artists.map(artist => {
-      let url =
-        "https://api.spotify.com/v1/artists/" +
-        artist.id +
-        "/albums?limit=50&include_groups=album";
-      axios
-        .get(url, headers)
-        .then(response => {
-          console.log(response);
-        })
-        .catch(error => {
-          console.log(error);
-        });
-    });
   };
   render() {
     return (
       <div className="App">
-        <div>
           {Object.keys(this.state.user).length === 0 ? (<Login click={this.handleLoginClick}>
-           
             </Login>
           ) : (
-            <div className="App">
+            <div>
             <div className="Menu">
-            <Menu inverted color='grey' fixed='top'>
-              <Menu.Item onClick={this.saveAlbums} >SaveTesti</Menu.Item>
-              <Menu.Item onClick={this.handleGetSavedAlbums}>PrintSavedAlbums</Menu.Item>
-              <Menu.Item onClick={this.removeAllFollowed} >RemoveAllFollowed</Menu.Item>
-      <Menu.Item position='right'> <Filter onTextChange={text => {
-              this.setState({filterString: text})
-            }}></Filter>
-           </Menu.Item>
-           <Menu.Item position='right' icon='github' onClick={this.handleGithubClick}></Menu.Item>
-           <Menu.Item position='right'>
-           
-           {this.state.user.images.length===0 ? (<Popup size='large'
-        key={this.state.user.id}
-        trigger={<Icon name='user outline'/>}
-        header={<Image src={this.state.user.images[0].url}/>}
-        content={<div><p>{this.state.user.display_name}</p><p>{this.state.user.email}</p><p>{<Flag name={this.state.user.country.toLowerCase()} />}{this.state.user.country}</p>
-        <p>{this.state.user.product}</p></div>}/>) : 
-        (<Popup size='large'
-        key={this.state.user.id}
-        trigger={<Icon name='user outline'/>}
-        header={<Icon name='user'/>}
-        content={<div><p>{this.state.user.display_name}</p><p>{this.state.user.email}</p><p>{<Flag name={this.state.user.country.toLowerCase()} />}{this.state.user.country}</p>
-        <p>{this.state.user.product}</p></div>}/>
-       )}      
-           {/* <Popup size='large'
-        key={this.state.user.id}
-        trigger={<Icon name='user outline'/>}
-        header={<Image src={this.state.user.images[0].url}/>}
-        content={<div><p>{this.state.user.display_name}</p><p>{this.state.user.email}</p><p>{<Flag name={this.state.user.country.toLowerCase()} />}{this.state.user.country}</p>
-        <p>{this.state.user.product}</p></div>}/>
-        */}
-      </Menu.Item>
-              </Menu>
+            <TopMenu saveAlbums={this.saveAlbums} removeAlbums={this.removeAllFollowed} user={this.state.user} github={this.handleGithubClick}filterFunction={() => this.handleFilterStringChange}/>
+            
               </div>
               <div className='Artist'>
-              <GridComponent
+              <Artist
                 artistit={this.state.artists}
                 func={this.handleCheckBox}
                 filterString={this.state.filterString}
               />
               </div>
-            </div>
+              </div>
           )}
         </div>
-      </div>
+    
     );
   }
 }
